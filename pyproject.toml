@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "benchrun"
-version = "0.1.0"
+version = "0.2.0"
 description = "Minimal package for benchmarking Python implementations with high-resolution timing"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -39,7 +39,7 @@ Repository = "https://github.com/gustavhertz/benchrun"
 Issues = "https://github.com/gustavhertz/benchrun/issues"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
