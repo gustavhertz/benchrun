@@ -1,9 +1,12 @@
 """Benchmark runner for comparing multiple implementations."""
 
 import time
+import logging
 from typing import Callable, Dict, Optional, List
 from benchrun.results import BenchmarkResults
 from benchrun.comparison import calculate_comparisons
+
+logger = logging.getLogger(__name__)
 
 
 class BenchmarkRunner:
@@ -32,6 +35,8 @@ class BenchmarkRunner:
         self.implementations: Dict[str, Callable] = {}
         self.results: Optional[Dict[str, BenchmarkResults]] = None
         self._impl_counter = 0
+        
+        logger.debug(f"BenchmarkRunner initialized: runs={runs}, warmup={warmup}")
     
     def add_implementation(self, func: Callable, name: Optional[str] = None) -> "BenchmarkRunner":
         """Add a function implementation to benchmark.
@@ -65,6 +70,8 @@ class BenchmarkRunner:
             counter += 1
         
         self.implementations[name] = func
+        logger.debug(f"Implementation registered: '{name}'")
+        logger.info(f"Added implementation: {name}")
         return self
     
     def run(self) -> Dict[str, BenchmarkResults]:
@@ -84,32 +91,60 @@ class BenchmarkRunner:
             >>> print(results["v1"].mean)
         """
         if not self.implementations:
+            logger.error("No implementations added")
             raise ValueError("No implementations added. Use add_implementation() first.")
         
+        logger.info(f"Starting benchmark run: {len(self.implementations)} implementations, {self.runs} runs each, {self.warmup} warmup")
         self.results = {}
         
-        for name, func in self.implementations.items():
+        for idx, (name, func) in enumerate(self.implementations.items(), 1):
+            logger.info(f"Benchmarking implementation {idx}/{len(self.implementations)}: '{name}'")
+            logger.debug(f"Starting warmup for '{name}': {self.warmup} runs")
+            
             # Warmup runs
             for _ in range(self.warmup):
                 func()
             
+            if self.warmup > 0:
+                logger.debug(f"Warmup complete for '{name}'")
+            
             # Timed runs
+            logger.debug(f"Starting timed runs for '{name}': {self.runs} runs")
             durations = []
-            for _ in range(self.runs):
+            progress_interval = max(1, self.runs // 10)
+            
+            for i in range(self.runs):
                 start = time.perf_counter()
                 func()
                 end = time.perf_counter()
-                durations.append(end - start)
+                duration = end - start
+                durations.append(duration)
+                
+                # Log progress for long-running benchmarks
+                if self.runs >= 100 and (i + 1) % progress_interval == 0:
+                    logger.debug(f"'{name}' progress: {i + 1}/{self.runs} runs complete")
             
-            self.results[name] = BenchmarkResults(
+            # Create results
+            result = BenchmarkResults(
                 name=name,
                 durations=durations,
                 runs=self.runs,
                 warmup=self.warmup
             )
+            self.results[name] = result
+            
+            logger.debug(f"'{name}' complete: mean={result.mean:.6f}s, min={result.min_time:.6f}s, max={result.max_time:.6f}s")
+            logger.info(f"Completed '{name}': mean={result.format_time(result.mean)}")
         
         # Calculate comparisons
+        logger.debug("Calculating performance comparisons")
         calculate_comparisons(self.results)
+        
+        # Log comparison summary
+        if self.results:
+            fastest_name = min(self.results.keys(), key=lambda k: self.results[k].mean)
+            fastest_time = self.results[fastest_name].mean
+            logger.info(f"Benchmark complete. Fastest: '{fastest_name}' ({self.results[fastest_name].format_time(fastest_time)})")
         
         return self.results
     
@@ -131,8 +166,10 @@ class BenchmarkRunner:
             >>> runner.print_comparison()
         """
         if self.results is None:
+            logger.error("print_comparison called before run()")
             raise ValueError("No results available. Call run() first.")
         
+        logger.debug(f"Printing comparison table: sort_by={sort_by}, show_all_stats={show_all_stats}")
         from benchrun.display import print_comparison
         print_comparison(self.results, sort_by=sort_by, show_all_stats=show_all_stats)
     
@@ -146,6 +183,8 @@ class BenchmarkRunner:
     
     def clear(self) -> None:
         """Clear all implementations and results."""
+        logger.debug("Clearing all implementations and results")
         self.implementations.clear()
         self.results = None
         self._impl_counter = 0
+        logger.info("Runner cleared")

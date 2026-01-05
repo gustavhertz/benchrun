@@ -2,6 +2,11 @@
 
 from benchrun import BenchmarkRunner
 
+# Uncomment the following lines to enable debug logging:
+# import logging
+# from benchrun import configure_logging
+# configure_logging(level=logging.DEBUG)
+
 
 def sum_with_loop():
     """Sum using a for loop."""
