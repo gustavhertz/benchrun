@@ -105,10 +105,16 @@ def format_results_table(results: Dict[str, BenchmarkResults],
     
     Args:
         results: Dictionary mapping implementation names to BenchmarkResults
-        sort_by: Metric to sort by. Default: 'mean'
+        sort_by: Metric to sort by ('mean', 'median', 'min', 'max'). Default: 'mean'
     
     Returns:
         List of formatted strings, one per line
+    
+    Example:
+        >>> results = {"impl1": result1, "impl2": result2}
+        >>> lines = format_results_table(results)
+        >>> for line in lines:
+        ...     print(line)
     """
     lines = []
     
@@ -150,11 +156,22 @@ def create_bar_chart(results: Dict[str, BenchmarkResults],
     
     Args:
         results: Dictionary mapping implementation names to BenchmarkResults
-        metric: Metric to display. Default: 'mean'
+        metric: Metric to display ('mean', 'median', 'min', 'max'). Default: 'mean'
         width: Width of the longest bar in characters. Default: 50
     
     Returns:
         Formatted bar chart as a string
+    
+    Example:
+        >>> results = {"fast": result1, "slow": result2}
+        >>> chart = create_bar_chart(results, metric="mean", width=40)
+        >>> print(chart)
+        
+        Bar Chart (mean)
+        ================================================
+        
+        fast    ████████████  1.234ms
+        slow    ████████████████████████  2.456ms
     """
     if not results:
         return "No results to display."

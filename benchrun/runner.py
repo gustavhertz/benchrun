@@ -141,11 +141,30 @@ class BenchmarkRunner:
         
         Returns:
             Dictionary of results, or None if run() hasn't been called
+        
+        Example:
+            >>> runner = BenchmarkRunner(runs=50)
+            >>> runner.add_implementation(func1, "v1")
+            >>> runner.run()
+            >>> results = runner.get_results()
+            >>> if results:
+            ...     print(results["v1"].mean)
         """
         return self.results
     
     def clear(self) -> None:
-        """Clear all implementations and results."""
+        """Clear all implementations and results.
+        
+        This resets the runner to its initial state, allowing you to
+        start fresh with new implementations.
+        
+        Example:
+            >>> runner = BenchmarkRunner()
+            >>> runner.add_implementation(func1, "v1")
+            >>> runner.run()
+            >>> runner.clear()  # Reset for new benchmarks
+            >>> runner.add_implementation(func2, "v2")
+        """
         self.implementations.clear()
         self.results = None
         self._impl_counter = 0
